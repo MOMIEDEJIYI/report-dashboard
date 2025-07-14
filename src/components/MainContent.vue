@@ -1,7 +1,15 @@
 <template>
   <div class="main-content">
     <div class="left-board" :style="{ width: `calc(100vw - ${rightWidth + resizerWidth}px)` }">
-      <LeftBoard :selectedReport="selectedReport" />
+      <LeftBoard 
+        :reports="reportList"
+        :selected-report-id="selectedReport?.id"
+        @select="handleSelect"
+        @remove="handleRemoveReport"
+        @reorder="handleReorderReports"
+        @update-position="handleUpdatePosition"
+        @update-size="handleUpdateSize"
+      />
     </div>
 
     <div class="resizer" @mousedown="startDragging" :style="{ width: resizerWidth + 'px' }"></div>
@@ -43,7 +51,12 @@ export default {
   },
   methods: {
     handleSelect(reportId) {
+      // 触发选中事件
       this.$emit('select-report', reportId)
+      
+      // 同时更新选中的报表
+      const selected = this.reportList.find(r => r.id === reportId)
+      this.$emit('update:selectedReport', selected)
     },
     handleUpdate(updatedReport) {
       this.$emit('update-report', updatedReport)
@@ -66,7 +79,37 @@ export default {
       this.isDragging = false
       document.removeEventListener('mousemove', this.onDrag)
       document.removeEventListener('mouseup', this.stopDragging)
-    }
+    },
+    handleRemoveReport(reportId) {
+      // 触发事件而不是直接修改 prop
+      this.$emit('remove-report', reportId)
+      
+      // 如果是当前选中的报表，触发取消选中事件
+      if (this.selectedReport?.id === reportId) {
+        this.$emit('update:selectedReport', null)
+      }
+    },
+    
+    handleReorderReports(newOrder) {
+      // 触发重新排序事件
+      this.$emit('reorder-reports', newOrder)
+    },
+    handleUpdatePosition({ id, x, y }) {
+      const report = this.reportList.find(r => r.id === id)
+      if (report) {
+        report.x = x
+        report.y = y
+        this.$emit('update-report', { ...report }) // 通知父组件更新
+      }
+    },
+    handleUpdateSize({ id, w, h }) {
+      const report = this.reportList.find(r => r.id === id)
+      if (report) {
+        report.w = w
+        report.h = h
+        this.$emit('update-report', { ...report }) // 通知父组件更新
+      }
+    },
   }
 }
 </script>

@@ -7,6 +7,8 @@
       :selectedReport="selectedReport"
       @select-report="handleSelectReport"
       @update-report="handleUpdateReport"
+      @remove-report="handleRemoveReport"
+      @reorder-reports="handleReorderReports"
     />
   </div>
 </template>
@@ -44,7 +46,7 @@ export default {
         }
       }
       
-      this.reportList.push(newReport)
+      this.reportList = [...this.reportList, newReport]  // 替换整个数组引用
       this.selectedReport = newReport
     },
     // 添加这个方法
@@ -74,6 +76,19 @@ export default {
       if (index !== -1) {
         this.$set(this.reportList, index, updatedReport)
       }
+    },
+    handleRemoveReport(reportId) {
+      this.reportList = this.reportList.filter(r => r.id !== reportId)
+      if (this.selectedReport?.id === reportId) {
+        this.selectedReport = null
+      }
+    },
+    
+    handleReorderReports(newOrder) {
+      // 创建新的数组而不是修改原数组
+      this.reportList = [...this.reportList].sort((a, b) => {
+        return newOrder.indexOf(a.id) - newOrder.indexOf(b.id)
+      })
     },
     
     getDefaultConfig(reportType) {
