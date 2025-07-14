@@ -2,10 +2,10 @@
   <div class="right-panel">
     <div class="report-list">
       <div 
-        v-for="report in reports" 
+        v-for="report in reportList" 
         :key="report.id"
         class="report-item"
-        :class="{ 'selected': report.id === selectedId }"
+        :class="{ 'selected': report.id === selectedReportId }"
         @click="selectReport(report.id)"
       >
         {{ report.name }}
@@ -77,37 +77,29 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
+
 export default {
   name: 'RightPanel',
-  props: {
-    reports: {
-      type: Array,
-      required: true
-    },
-    selectedId: {
-      type: String,
-      default: null
-    }
-  },
   computed: {
+    ...mapState(['reportList', 'selectedReportId']),
     selectedReport() {
-      const report = this.reports.find(r => r.id === this.selectedId)
-      // 确保返回的report有完整结构
-      return report || null
+      return this.reportList.find(r => r.id === this.selectedReportId) || null
     }
   },
   methods: {
     selectReport(reportId) {
-      this.$emit('select', reportId)
+      this.$store.commit('setSelectedReportId', reportId)
     },
     updateReport() {
-      if (this.selectedReport) {
-        // 确保dataSource.fields存在
-        if (!this.selectedReport.dataSource.fields) {
-          this.$set(this.selectedReport.dataSource, 'fields', ['category', 'value'])
-        }
-        this.$emit('update-report', this.selectedReport)
+      if (!this.selectedReport) return
+      
+      if (!this.selectedReport.dataSource.fields) {
+        this.$set(this.selectedReport.dataSource, 'fields', ['category', 'value'])
       }
+
+      // 这里用 mutation 更新整个 reportList 中的对应项
+      this.$store.commit('updateReport', this.selectedReport)
     }
   }
 }

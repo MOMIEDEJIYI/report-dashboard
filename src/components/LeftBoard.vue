@@ -1,9 +1,7 @@
 <template>
-  <div class="left-board">
-    {{ reports }}
-    <div v-if="reports.length" class="charts-container">
+  <div class="left-board" :style="{ '--grid-row-height': rowHeight + 'px', '--min-rows': minRows }">
+    <div v-if="localReports.length" class="charts-container">
       <GridLayout
-        :key="layoutKey"
         :layout="layout"
         :col-num="12"
         :row-height="30"
@@ -14,7 +12,7 @@
         @layout-updated="onLayoutUpdated"
       >
         <GridItem
-          v-for="report in reports"
+          v-for="report in localReports"
           :key="report.id"
           :i="report.id.toString()"
           v-bind="getLayoutById(report.id)"
@@ -22,8 +20,6 @@
           :min-h="4"
           class="chart-card"
           @click.native="selectReport(report.id)"
-          @resized="onItemResized"
-          @resize="onItemResize"
           :class="{ selected: report.id === selectedReportId }"
         >
           <div class="chart-header">
@@ -43,69 +39,44 @@
 <script>
 import * as echarts from 'echarts'
 import { GridLayout, GridItem } from 'vue-grid-layout'
+import { mapState } from 'vuex'
 
 export default {
   name: 'LeftBoard',
   components: { GridLayout, GridItem },
-  props: {
-    reports: { type: Array, default: () => [] },
-    selectedReportId: {
-      type: [String, Number],
-      default: null
-    },
-  },
+
   data() {
     return {
       chartInstances: {},
       chartRefs: {},
+      layout: [],
+      rowHeight: 30,
+      minRows: 4,
     }
   },
-  computed: {
-    layout() {
-      return this.reports.map((r, i) => {
-        // 确保所有值都是数字且有效
-        const x = Number.isInteger(r.x) ? r.x : 
-                (Number.isInteger(r.xGrid) ? r.xGrid : (i * 4) % 12)
-        const y = Number.isInteger(r.y) ? r.y : 
-                (Number.isInteger(r.yGrid) ? r.yGrid : Math.floor((i * 4) / 12) * 8)
-        const w = Number.isInteger(r.w) ? r.w : 
-                (Number.isInteger(r.wGrid) ? r.wGrid : 4)
-        const h = Number.isInteger(r.h) ? r.h : 
-                (Number.isInteger(r.hGrid) ? r.hGrid : 8)
 
-        // 验证所有值都是有效的数字
-        if ([x, y, w, h].some(v => typeof v !== 'number' || isNaN(v))) {
-          console.error('无效的布局值:', { id: r.id, x, y, w, h })
-          return {
-            i: r.id.toString(),
-            x: 0, y: 0, w: 4, h: 8,
-            minW: 2,
-            minH: 4,
-            static: false
-          }
-        }
-        return {
-          i: r.id.toString(),
-          x, y, w, h,
-          minW: 2,
-          minH: 4,
-          static: false
-        }
-      })
-    },
-    // layoutKey() {
-    //   return this.reports.map(r => `${r.id}-${r.wGrid}-${r.hGrid}`).join('|');
-    // }
+  computed: {
+    ...mapState(['reportList', 'selectedReportId']),
+    localReports() {
+      return this.reportList
+    }
   },
+
+  mounted() {
+    this.initLayout(this.localReports)
+    this.$nextTick(() => this.initAllCharts())
+  },
+
   watch: {
-    reports: {
-      handler() {
+    reportList: {
+      handler(newReports) {
+        this.initLayout(newReports)
         this.$nextTick(() => this.initAllCharts())
       },
-      deep: true,
-      immediate: true,
+      deep: true
     }
   },
+
   methods: {
     setChartRef(id, el) {
       if (el) {
@@ -114,12 +85,12 @@ export default {
         this.$delete(this.chartRefs, id)
       }
     },
+
     initAllCharts() {
       Object.values(this.chartInstances).forEach(chart => chart.dispose())
       this.chartInstances = {}
 
-      console.log('layout:', JSON.stringify(this.layout))
-      this.reports.forEach(report => {
+      this.localReports.forEach(report => {
         const chartDom = this.chartRefs[report.id]
         if (chartDom) {
           const myChart = echarts.init(chartDom)
@@ -128,6 +99,7 @@ export default {
         }
       })
     },
+
     updateChart(report) {
       if (!this.chartInstances[report.id]) return
       try {
@@ -141,52 +113,27 @@ export default {
         this.renderErrorChart(report.id)
       }
     },
+
     selectReport(reportId) {
-      this.$emit('select', reportId)
-    },
-    // 缩放完成
-    onItemResized(i, newH, newW) {
-      console.log('[Resized]', i, newW, newH);
-
-      const updatedLayouts = this.reports.map(r => {
-        if (r.id.toString() === i) {
-          return {
-            id: r.id,
-            xGrid: r.xGrid ?? r.x ?? 0,
-            yGrid: r.yGrid ?? r.y ?? 0,
-            wGrid: newW,
-            hGrid: newH,
-          };
-        } else {
-          return {
-            id: r.id,
-            xGrid: r.xGrid ?? r.x ?? 0,
-            yGrid: r.yGrid ?? r.y ?? 0,
-            wGrid: r.wGrid ?? r.w ?? 4,
-            hGrid: r.hGrid ?? r.h ?? 8,
-          };
-        }
-      });
-
-      // 触发完整 layout 更新（和拖动一样）
-      this.$emit('update-layout', updatedLayouts);
+      this.$store.commit('setSelectedReportId', reportId)
     },
 
-    // 可选：缩放过程中做一些反馈处理
-    onItemResize(i, newH, newW) {
-      // 可选，实时反馈
-      console.log('[Resizing]', i, newW, newH);
-    },
     onLayoutUpdated(newLayout) {
-      console.log('newLayout from grid:', JSON.stringify(newLayout))
-      this.$emit('update-layout', newLayout.map(item => ({
+      // 直接调用 action 更新 Vuex 状态，不在这里修改 localReports
+      const updatedLayouts = newLayout.map(item => ({
         id: item.i,
         xGrid: item.x,
         yGrid: item.y,
         wGrid: item.w,
-        hGrid: item.h,
-      })))
-      this.reports.forEach(r => this.chartInstances[r.id]?.resize())
+        hGrid: item.h
+      }))
+
+      this.$store.dispatch('updateLayout', updatedLayouts)
+
+      // 下面这行可以保留，保证图表自适应
+      this.$nextTick(() => {
+        this.localReports.forEach(r => this.chartInstances[r.id]?.resize())
+      })
     },
     generateChartOption(report, data, measureField) {
       return {
@@ -217,6 +164,7 @@ export default {
         ],
       }
     },
+
     getChartData(report) {
       if (!report?.dataSource?.fields) return this.getFallbackData()
       const [dimension, measure] = report.dataSource.fields
@@ -229,6 +177,7 @@ export default {
         [dimension + '5', Math.round(Math.random() * 100)],
       ]
     },
+
     getFallbackData() {
       return [
         ['月份', '销售额'],
@@ -239,6 +188,7 @@ export default {
         ['5月', 210],
       ]
     },
+
     renderErrorChart(id) {
       const option = {
         title: { text: '图表加载失败', subtext: '请检查数据格式', left: 'center' },
@@ -254,10 +204,44 @@ export default {
       }
       this.chartInstances[id]?.setOption(option)
     },
+
     getLayoutById(id) {
-      return this.layout.find(l => l.i === id.toString()) || {};
+      return this.layout.find(l => l.i === id.toString()) || {}
+    },
+
+    initLayout(reports) {
+      this.layout = reports.map((r, i) => {
+        const x = Number.isInteger(r.x) ? r.x :
+                  Number.isInteger(r.xGrid) ? r.xGrid : (i * 4) % 12
+        const y = Number.isInteger(r.y) ? r.y :
+                  Number.isInteger(r.yGrid) ? r.yGrid : Math.floor((i * 4) / 12) * 8
+        const w = Number.isInteger(r.w) ? r.w :
+                  Number.isInteger(r.wGrid) ? r.wGrid : 4
+        const h = Number.isInteger(r.h) ? r.h :
+                  Number.isInteger(r.hGrid) ? r.hGrid : 8
+
+        if ([x, y, w, h].some(v => typeof v !== 'number' || isNaN(v))) {
+          console.error('无效的布局值:', { id: r.id, x, y, w, h })
+          return {
+            i: r.id.toString(),
+            x: 0, y: 0, w: 4, h: 8,
+            minW: 2,
+            minH: 4,
+            static: false
+          }
+        }
+
+        return {
+          i: r.id.toString(),
+          x, y, w, h,
+          minW: 2,
+          minH: 4,
+          static: false
+        }
+      })
     },
   },
+
   beforeDestroy() {
     Object.values(this.chartInstances).forEach(chart => chart.dispose())
     this.chartInstances = {}
@@ -276,6 +260,7 @@ export default {
   width: 100%;
   height: calc(100% - 40px);
   overflow: auto;
+  min-height: 500px;
 }
 
 .chart-card {
@@ -285,8 +270,7 @@ export default {
   box-shadow: 0 2px 4px rgb(0 0 0 / 0.05);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  cursor: pointer;
+  cursor: default;
 }
 
 .chart-card.selected {
@@ -307,7 +291,9 @@ export default {
 .chart-content {
   flex: 1;
   padding: 10px;
-  min-height: 150px;
+  padding-right: 20px;
+  padding-bottom: 20px;
+  min-height: calc(var(--grid-row-height) * var(--min-rows) - 20px);
   box-sizing: border-box;
 }
 
@@ -325,4 +311,14 @@ export default {
   box-sizing: border-box;
 }
 
+.vue-resizable-handle {
+  z-index: 100;
+  bottom: 5px;
+  right: 5px;
+  width: 15px;
+  height: 15px;
+  background-color: #1890ff;
+  border-radius: 3px;
+  pointer-events: auto;
+}
 </style>
