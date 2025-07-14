@@ -3,6 +3,7 @@
     {{ reports }}
     <div v-if="reports.length" class="charts-container">
       <GridLayout
+        :key="layoutKey"
         :layout="layout"
         :col-num="12"
         :row-height="30"
@@ -91,7 +92,10 @@ export default {
           static: false
         }
       })
-    }
+    },
+    // layoutKey() {
+    //   return this.reports.map(r => `${r.id}-${r.wGrid}-${r.hGrid}`).join('|');
+    // }
   },
   watch: {
     reports: {
@@ -143,20 +147,31 @@ export default {
     // 缩放完成
     onItemResized(i, newH, newW) {
       console.log('[Resized]', i, newW, newH);
-      const report = this.reports.find(r => r.id.toString() === i);
-      if (report) {
-        report.wGrid = newW;
-        report.hGrid = newH;
-        // 触发 layout 更新
-        this.$emit('update-layout', [{
-          id: report.id,
-          xGrid: report.xGrid ?? report.x ?? 0,
-          yGrid: report.yGrid ?? report.y ?? 0,
-          wGrid: newW,
-          hGrid: newH,
-        }])
-      }
+
+      const updatedLayouts = this.reports.map(r => {
+        if (r.id.toString() === i) {
+          return {
+            id: r.id,
+            xGrid: r.xGrid ?? r.x ?? 0,
+            yGrid: r.yGrid ?? r.y ?? 0,
+            wGrid: newW,
+            hGrid: newH,
+          };
+        } else {
+          return {
+            id: r.id,
+            xGrid: r.xGrid ?? r.x ?? 0,
+            yGrid: r.yGrid ?? r.y ?? 0,
+            wGrid: r.wGrid ?? r.w ?? 4,
+            hGrid: r.hGrid ?? r.h ?? 8,
+          };
+        }
+      });
+
+      // 触发完整 layout 更新（和拖动一样）
+      this.$emit('update-layout', updatedLayouts);
     },
+
     // 可选：缩放过程中做一些反馈处理
     onItemResize(i, newH, newW) {
       // 可选，实时反馈
