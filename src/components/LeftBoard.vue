@@ -322,3 +322,22 @@ export default {
   pointer-events: auto;
 }
 </style>
+
+<style>
+.left-board {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE 10+ */
+}
+
+.left-board::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+
+/* 重写 vue-grid-layout 的样式以显示绿色底纹 */
+.vue-grid-placeholder {
+  background: rgba(0, 255, 0, 0.3) !important;
+  border: 2px dashed green !important;
+}
+</style>
