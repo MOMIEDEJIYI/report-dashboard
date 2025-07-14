@@ -1,14 +1,15 @@
-<!-- ReportDashboard.vue -->
 <template>
   <div class="report-dashboard">
     <HeaderBar @create-report="handleCreateReport" />
-    <MainContent 
-      :reportList="reportList" 
-      :selectedReport="selectedReport"
+    <MainContent
+      :reportList="reportList"
+      :selectedReportId="selectedReportId"
+      :rightWidth.sync="rightWidth"
       @select-report="handleSelectReport"
       @update-report="handleUpdateReport"
       @remove-report="handleRemoveReport"
       @reorder-reports="handleReorderReports"
+      @update-report-list="updateReportLayout"
     />
   </div>
 </template>
@@ -16,6 +17,7 @@
 <script>
 import HeaderBar from '@/components/HeaderBar.vue'
 import MainContent from '@/components/MainContent.vue'
+import { mapActions } from 'vuex'
 
 export default {
   components: {
@@ -24,12 +26,22 @@ export default {
   },
   data() {
     return {
-      reportList: [], // 存储所有报表
-      selectedReport: null // 当前选中的报表
+      selectedReport: null,
+      rightWidth: 400,
+    }
+  },
+  computed: {
+    reportList() {
+      return this.$store.state.reportList || []
+    },
+    selectedReportId() {
+      return this.selectedReport ? this.selectedReport.id : null
     }
   },
   methods: {
-    handleCreateReport(reportType) {
+    ...mapActions(['updateLayout', 'createReport']),
+    
+    async handleCreateReport(reportType) {
       const newReport = {
         id: Date.now().toString(),
         type: reportType.id,
@@ -43,22 +55,59 @@ export default {
           type: 'static',
           fields: this.getDefaultFields(reportType.id),
           url: ''
-        }
+        },
+        x: (this.reportList.length * 4) % 12,
+        y: Math.floor(this.reportList.length / 3) * 8,
+        w: 4,
+        h: 8,
+        xGrid: (this.reportList.length * 4) % 12,
+        yGrid: Math.floor(this.reportList.length / 3) * 8,
+        wGrid: 4,
+        hGrid: 8
       }
-      
-      this.reportList = [...this.reportList, newReport]  // 替换整个数组引用
+
+      await this.createReport(newReport)
+      console.log(JSON.stringify(this.reportList));
       this.selectedReport = newReport
     },
-    // 添加这个方法
-    getDefaultChartType(reportType) {
-      const types = {
-        sales: 'line',
-        inventory: 'bar',
-        customer: 'pie'
+
+    handleSelectReport(reportId) {
+      this.selectedReport = this.reportList.find(r => r.id === reportId)
+    },
+
+    handleUpdateReport(updatedReport) {
+      const index = this.reportList.findIndex(r => r.id === updatedReport.id)
+      if (index !== -1) {
+        const newList = [...this.reportList]
+        newList.splice(index, 1, updatedReport)
+        this.$store.commit('setReportList', newList)
       }
+    },
+
+    handleRemoveReport(reportId) {
+      const newList = this.reportList.filter(r => r.id !== reportId)
+      this.$store.commit('setReportList', newList)
+      if (this.selectedReport?.id === reportId) {
+        this.selectedReport = null
+      }
+    },
+
+    handleReorderReports(newOrder) {
+      const newList = [...this.reportList].sort((a, b) => {
+        return newOrder.indexOf(a.id) - newOrder.indexOf(b.id)
+      })
+      this.$store.commit('setReportList', newList)
+    },
+
+    updateReportLayout(updatedLayouts) {
+      this.updateLayout(updatedLayouts)
+    },
+
+    getDefaultChartType(reportType) {
+      const types = { sales: 'line', inventory: 'bar', customer: 'pie' }
       return types[reportType] || 'line'
     },
-    
+
     getDefaultFields(reportType) {
       const fields = {
         sales: ['date', 'amount'],
@@ -67,51 +116,6 @@ export default {
       }
       return fields[reportType] || ['category', 'value']
     },
-    handleSelectReport(reportId) {
-      this.selectedReport = this.reportList.find(r => r.id === reportId)
-    },
-    
-    handleUpdateReport(updatedReport) {
-      const index = this.reportList.findIndex(r => r.id === updatedReport.id)
-      if (index !== -1) {
-        this.$set(this.reportList, index, updatedReport)
-      }
-    },
-    handleRemoveReport(reportId) {
-      this.reportList = this.reportList.filter(r => r.id !== reportId)
-      if (this.selectedReport?.id === reportId) {
-        this.selectedReport = null
-      }
-    },
-    
-    handleReorderReports(newOrder) {
-      // 创建新的数组而不是修改原数组
-      this.reportList = [...this.reportList].sort((a, b) => {
-        return newOrder.indexOf(a.id) - newOrder.indexOf(b.id)
-      })
-    },
-    
-    getDefaultConfig(reportType) {
-      // 根据不同类型返回不同的默认配置
-      const configs = {
-        sales: {
-          chartType: 'line',
-          dimensions: ['date'],
-          measures: ['sales']
-        },
-        inventory: {
-          chartType: 'bar',
-          dimensions: ['product'],
-          measures: ['quantity']
-        },
-        customer: {
-          chartType: 'pie',
-          dimensions: ['region'],
-          measures: ['customerCount']
-        }
-      }
-      return configs[reportType] || {}
-    }
   }
 }
 </script>

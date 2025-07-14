@@ -1,23 +1,22 @@
 <template>
   <div class="main-content">
     <div class="left-board" :style="{ width: `calc(100vw - ${rightWidth + resizerWidth}px)` }">
-      <LeftBoard 
+      <LeftBoard
         :reports="reportList"
-        :selected-report-id="selectedReport?.id"
+        :selected-report-id="selectedReportId"
         @select="handleSelect"
         @remove="handleRemoveReport"
         @reorder="handleReorderReports"
-        @update-position="handleUpdatePosition"
-        @update-size="handleUpdateSize"
+        @update-layout="handleUpdateLayout"
       />
     </div>
 
     <div class="resizer" @mousedown="startDragging" :style="{ width: resizerWidth + 'px' }"></div>
 
     <div class="right-panel" :style="{ width: rightWidth + 'px' }">
-      <RightPanel 
-        :reports="reportList" 
-        :selectedId="selectedReport?.id" 
+      <RightPanel
+        :reports="reportList"
+        :selectedId="selectedReportId"
         @select="handleSelect"
         @update-report="handleUpdate"
       />
@@ -36,27 +35,34 @@ export default {
       type: Array,
       required: true
     },
-    selectedReport: {
-      type: Object,
+    selectedReportId: {
+      type: [String, Number],
       default: null
+    },
+    rightWidth: {
+      type: Number,
+      default: 400
+    },
+    resizerWidth: {
+      type: Number,
+      default: 5
     }
   },
   components: { LeftBoard, RightPanel },
   data() {
     return {
-      rightWidth: 400,
-      resizerWidth: 5,
       isDragging: false
     }
   },
+  watch: {
+    reportList(newList) {
+      console.log('reportList changed:', JSON.stringify(newList))
+    }
+  },
+
   methods: {
     handleSelect(reportId) {
-      // 触发选中事件
       this.$emit('select-report', reportId)
-      
-      // 同时更新选中的报表
-      const selected = this.reportList.find(r => r.id === reportId)
-      this.$emit('update:selectedReport', selected)
     },
     handleUpdate(updatedReport) {
       this.$emit('update-report', updatedReport)
@@ -68,12 +74,12 @@ export default {
     },
     onDrag(e) {
       if (!this.isDragging) return
-
       const minRight = 400
       const maxRight = 600
       let newRightWidth = window.innerWidth - e.clientX - this.resizerWidth
       newRightWidth = Math.min(Math.max(newRightWidth, minRight), maxRight)
-      this.rightWidth = newRightWidth
+      // 通过事件通知父组件更新 rightWidth
+      this.$emit('update:rightWidth', newRightWidth)
     },
     stopDragging() {
       this.isDragging = false
@@ -81,35 +87,18 @@ export default {
       document.removeEventListener('mouseup', this.stopDragging)
     },
     handleRemoveReport(reportId) {
-      // 触发事件而不是直接修改 prop
       this.$emit('remove-report', reportId)
-      
-      // 如果是当前选中的报表，触发取消选中事件
-      if (this.selectedReport?.id === reportId) {
-        this.$emit('update:selectedReport', null)
+      if (this.selectedReportId === reportId) {
+        this.$emit('update:selectedReportId', null)
       }
     },
-    
     handleReorderReports(newOrder) {
-      // 触发重新排序事件
       this.$emit('reorder-reports', newOrder)
     },
-    handleUpdatePosition({ id, x, y }) {
-      const report = this.reportList.find(r => r.id === id)
-      if (report) {
-        report.x = x
-        report.y = y
-        this.$emit('update-report', { ...report }) // 通知父组件更新
-      }
-    },
-    handleUpdateSize({ id, w, h }) {
-      const report = this.reportList.find(r => r.id === id)
-      if (report) {
-        report.w = w
-        report.h = h
-        this.$emit('update-report', { ...report }) // 通知父组件更新
-      }
-    },
+    handleUpdateLayout(updatedLayouts) {
+      console.log('handleUpdateLayout:', JSON.stringify(updatedLayouts));
+      this.$emit('update-report-list', updatedLayouts)
+    }
   }
 }
 </script>
