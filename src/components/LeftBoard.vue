@@ -1,5 +1,6 @@
 <template>
   <div class="left-board" :style="{ '--grid-row-height': rowHeight + 'px', '--min-rows': minRows }">
+    {{ localReports }}
     <div v-if="localReports.length" class="charts-container">
       <GridLayout
         :layout="layout"
@@ -26,7 +27,15 @@
             <h3>{{ report.config?.title || '未命名报表' }}</h3>
             <span class="close-btn" @click.stop="removeReport(report.id)">×</span>
           </div>
-          <div class="chart-content" :ref="el => setChartRef(report.id, el)"></div>
+          <div class="chart-content">
+            <!-- 这里改用子组件，传入 report -->
+            <component
+              :is="getReportComponent(report)"
+              :report="report"
+              :type="report.type"
+              class="report-body"
+            />
+          </div>
         </GridItem>
       </GridLayout>
     </div>
@@ -38,18 +47,33 @@
 </template>
 
 <script>
-import * as echarts from 'echarts'
 import { GridLayout, GridItem } from 'vue-grid-layout'
 import { mapState } from 'vuex'
+import UnknownReport from './report-types/UnknownReport.vue'
+
+const requireComponent = require.context(
+  './report-types',
+  false,
+  /[A-Z]\w+\.vue$/
+)
+
+const reportTypeMap = {}
+requireComponent.keys().forEach(fileName => {
+  const componentConfig = requireComponent(fileName)
+  const component = componentConfig.default || componentConfig
+  const name = fileName.replace(/^\.\/(.*)\.\w+$/, '$1').toLowerCase()
+  reportTypeMap[name] = component
+})
 
 export default {
   name: 'LeftBoard',
-  components: { GridLayout, GridItem },
+  components: {
+    GridLayout,
+    GridItem,
+  },
 
   data() {
     return {
-      chartInstances: {},
-      chartRefs: {},
       layout: [],
       rowHeight: 30,
       minRows: 4,
@@ -65,54 +89,24 @@ export default {
 
   mounted() {
     this.initLayout(this.localReports)
-    this.$nextTick(() => this.initAllCharts())
   },
 
   watch: {
     reportList: {
       handler(newReports) {
         this.initLayout(newReports)
-        this.$nextTick(() => this.initAllCharts())
       },
       deep: true
     }
   },
 
   methods: {
-    setChartRef(id, el) {
-      if (el) {
-        this.$set(this.chartRefs, id, el)
-      } else {
-        this.$delete(this.chartRefs, id)
+    getReportComponent(report) {
+      const key = report.componentName?.toLowerCase?.()
+      if (key && reportTypeMap[key]) {
+        return reportTypeMap[key]
       }
-    },
-
-    initAllCharts() {
-      Object.values(this.chartInstances).forEach(chart => chart.dispose())
-      this.chartInstances = {}
-
-      this.localReports.forEach(report => {
-        const chartDom = this.chartRefs[report.id]
-        if (chartDom) {
-          const myChart = echarts.init(chartDom)
-          this.chartInstances[report.id] = myChart
-          this.updateChart(report)
-        }
-      })
-    },
-
-    updateChart(report) {
-      if (!this.chartInstances[report.id]) return
-      try {
-        const data = this.getChartData(report)
-        const measureField = report.dataSource?.fields[1] || 'value'
-        const option = this.generateChartOption(report, data, measureField)
-        this.chartInstances[report.id].setOption(option)
-        this.chartInstances[report.id].resize()
-      } catch (error) {
-        console.error('图表渲染失败:', error)
-        this.renderErrorChart(report.id)
-      }
+      return UnknownReport
     },
 
     selectReport(reportId) {
@@ -120,7 +114,6 @@ export default {
     },
 
     onLayoutUpdated(newLayout) {
-      // 直接调用 action 更新 Vuex 状态，不在这里修改 localReports
       const updatedLayouts = newLayout.map(item => ({
         id: item.i,
         xGrid: item.x,
@@ -128,81 +121,7 @@ export default {
         wGrid: item.w,
         hGrid: item.h
       }))
-
       this.$store.dispatch('updateLayout', updatedLayouts)
-
-      this.$nextTick(() => {
-        this.localReports.forEach(r => this.chartInstances[r.id]?.resize())
-      })
-    },
-    generateChartOption(report, data, measureField) {
-      return {
-        title: { text: report.config?.title || '未命名报表', left: 'center' },
-        tooltip: { trigger: 'axis' },
-        legend: {
-          show: report.config?.showLegend !== false,
-          data: [measureField],
-          bottom: 10,
-        },
-        dataset: { source: data },
-        xAxis: {
-          type: 'category',
-          axisLabel: { interval: 0, rotate: 30 },
-        },
-        yAxis: {},
-        series: [
-          {
-            type: report.config?.chartType || 'line',
-            name: measureField,
-            encode: {
-              x: report.dataSource?.fields[0],
-              y: report.dataSource?.fields[1],
-            },
-            showSymbol: true,
-            smooth: true,
-          },
-        ],
-      }
-    },
-
-    getChartData(report) {
-      if (!report?.dataSource?.fields) return this.getFallbackData()
-      const [dimension, measure] = report.dataSource.fields
-      return [
-        [dimension, measure],
-        [dimension + '1', Math.round(Math.random() * 100)],
-        [dimension + '2', Math.round(Math.random() * 100)],
-        [dimension + '3', Math.round(Math.random() * 100)],
-        [dimension + '4', Math.round(Math.random() * 100)],
-        [dimension + '5', Math.round(Math.random() * 100)],
-      ]
-    },
-
-    getFallbackData() {
-      return [
-        ['月份', '销售额'],
-        ['1月', 100],
-        ['2月', 200],
-        ['3月', 150],
-        ['4月', 180],
-        ['5月', 210],
-      ]
-    },
-
-    renderErrorChart(id) {
-      const option = {
-        title: { text: '图表加载失败', subtext: '请检查数据格式', left: 'center' },
-        xAxis: { type: 'category', data: ['错误'] },
-        yAxis: { type: 'value' },
-        series: [
-          {
-            type: 'bar',
-            data: [0],
-            itemStyle: { color: '#ff4d4f' },
-          },
-        ],
-      }
-      this.chartInstances[id]?.setOption(option)
     },
 
     getLayoutById(id) {
@@ -240,23 +159,14 @@ export default {
         }
       })
     },
+
     removeReport(id) {
       this.$store.commit('removeReportById', id)
       if (this.selectedReportId === id) {
         this.$store.commit('setSelectedReportId', null)
       }
-      this.$nextTick(() => {
-        this.initLayout(this.localReports)
-        this.initAllCharts()
-      })
     }
-
-  },
-
-  beforeDestroy() {
-    Object.values(this.chartInstances).forEach(chart => chart.dispose())
-    this.chartInstances = {}
-  },
+  }
 }
 </script>
 

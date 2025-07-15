@@ -31,6 +31,7 @@ export default {
       const newReport = {
         id,
         type: reportType.id,
+        componentName: reportType.componentName || reportType.id,
         name: `${reportType.name} ${this.$store.state.reportList.length + 1}`,
         config: {
           chartType: this.getDefaultChartType(reportType.id),

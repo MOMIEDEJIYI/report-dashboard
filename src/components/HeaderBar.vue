@@ -20,9 +20,10 @@ export default {
     reports: {
       type: Array,
       default: () => [
-        { id: 'sales', name: '销售报表' },
-        { id: 'inventory', name: '库存报表' },
-        { id: 'customer', name: '客户分析' }
+        { id: 'sales', name: '销售报表', componentName: 'EChartRenderer' },
+        { id: 'inventory', name: '库存报表', componentName: 'EChartRenderer' },
+        { id: 'customer', name: '客户分析', componentName: 'EChartRenderer' },
+        { id: 'summary', name: '自定义统计卡片', componentName: 'SummaryCard' }
       ]
     }
   },
