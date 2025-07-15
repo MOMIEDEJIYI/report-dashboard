@@ -43,6 +43,9 @@ export default new Vuex.Store({
     setSelectedReportId(state, id) {
       state.selectedReportId = id
     },
+    removeReportById(state, id) {
+        state.reportList = state.reportList.filter(r => r.id !== id)
+    },
     updateReport(state, updatedReport) {
       const idx = state.reportList.findIndex(r => r.id === updatedReport.id)
       if (idx !== -1) {
@@ -72,7 +75,6 @@ export default new Vuex.Store({
     updateReport(state, updatedReport) {
       const index = state.reportList.findIndex(r => r.id === updatedReport.id)
       if (index !== -1) {
-        // 用 Vue.set 确保响应式更新
         Vue.set(state.reportList, index, { ...updatedReport })
       }
     },

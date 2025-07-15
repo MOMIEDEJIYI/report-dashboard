@@ -24,6 +24,7 @@
         >
           <div class="chart-header">
             <h3>{{ report.config?.title || '未命名报表' }}</h3>
+            <span class="close-btn" @click.stop="removeReport(report.id)">×</span>
           </div>
           <div class="chart-content" :ref="el => setChartRef(report.id, el)"></div>
         </GridItem>
@@ -130,7 +131,6 @@ export default {
 
       this.$store.dispatch('updateLayout', updatedLayouts)
 
-      // 下面这行可以保留，保证图表自适应
       this.$nextTick(() => {
         this.localReports.forEach(r => this.chartInstances[r.id]?.resize())
       })
@@ -240,6 +240,17 @@ export default {
         }
       })
     },
+    removeReport(id) {
+      this.$store.commit('removeReportById', id)
+      if (this.selectedReportId === id) {
+        this.$store.commit('setSelectedReportId', null)
+      }
+      this.$nextTick(() => {
+        this.initLayout(this.localReports)
+        this.initAllCharts()
+      })
+    }
+
   },
 
   beforeDestroy() {
@@ -286,6 +297,17 @@ export default {
   align-items: center;
   font-weight: 500;
   font-size: 16px;
+}
+.close-btn {
+  margin-left: auto;
+  font-size: 16px;
+  cursor: pointer;
+  color: #999;
+  padding: 0 5px;
+  transition: color 0.2s;
+}
+.close-btn:hover {
+  color: #f5222d;
 }
 
 .chart-content {
