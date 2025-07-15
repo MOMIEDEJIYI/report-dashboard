@@ -1,6 +1,6 @@
 <template>
   <div class="left-board" :style="{ '--grid-row-height': rowHeight + 'px', '--min-rows': minRows }">
-    {{ localReports }}
+    <!-- {{ localReports }} -->
     <div v-if="localReports.length" class="charts-container">
       <GridLayout
         :layout="layout"
@@ -24,11 +24,10 @@
           :class="{ selected: report.id === selectedReportId }"
         >
           <div class="chart-header">
-            <h3>{{ report.config?.title || '未命名报表' }}</h3>
+            <h3>{{ report?.name || '未命名报表' }}</h3>
             <span class="close-btn" @click.stop="removeReport(report.id)">×</span>
           </div>
           <div class="chart-content">
-            <!-- 这里改用子组件，传入 report -->
             <component
               :is="getReportComponent(report)"
               :report="report"
@@ -252,15 +251,6 @@ export default {
   background-color: #1890ff;
   border-radius: 3px;
   pointer-events: auto;
-}
-
-.report-body {
-  width: 100%;
-  height: 100%;
-  /* 避免子组件内容溢出 */
-  overflow: hidden;
-  /* 如果需要让echarts填满整个区域 */
-  display: block;
 }
 
 </style>

@@ -11,6 +11,7 @@
 import HeaderBar from '@/components/HeaderBar.vue'
 import MainContent from '@/components/MainContent.vue'
 import { mapActions, mapMutations } from 'vuex'
+import { ReportTypeDefaults } from '@/config/reportTypes'
 
 export default {
   components: {
@@ -28,20 +29,19 @@ export default {
     
     async handleCreateReport(reportType) {
       const id = Date.now().toString()
+      const defaults = ReportTypeDefaults[reportType.id] || {}
+
       const newReport = {
         id,
         type: reportType.id,
-        componentName: reportType.componentName || reportType.id,
+        componentName: defaults.componentName || reportType.componentName || reportType.id,
         name: `${reportType.name} ${this.$store.state.reportList.length + 1}`,
-        config: {
-          chartType: this.getDefaultChartType(reportType.id),
-          title: `${reportType.name}报表`,
-          showLegend: true
-        },
+        config: defaults.config || {},
         dataSource: {
           type: 'static',
-          fields: this.getDefaultFields(reportType.id),
-          url: ''
+          fields: defaults.fields || ['category', 'value'],
+          url: '',
+          data: defaults.data || {}
         },
         x: (this.$store.state.reportList.length * 4) % 12,
         y: Math.floor(this.$store.state.reportList.length / 3) * 8,

@@ -1,8 +1,8 @@
 <template>
   <div class="summary-card">
     <h3>{{ report.config.title }}</h3>
-    <p>本月总额：￥{{ getMockValue() }}</p>
-    <p>同比增长：+{{ getMockValue(20) }}%</p>
+    <p>本月总额：￥{{ report.dataSource?.data?.total ?? 'N/A' }}</p>
+    <p>同比增长：{{ formatGrowth(report.dataSource?.data?.growth) }}</p>
   </div>
 </template>
 
@@ -10,8 +10,10 @@
 export default {
   props: ['report'],
   methods: {
-    getMockValue(max = 1000) {
-      return Math.floor(Math.random() * max)
+    formatGrowth(value) {
+      if (typeof value !== 'number') return 'N/A'
+      const sign = value >= 0 ? '+' : ''
+      return `${sign}${value.toFixed(2)}%`
     }
   }
 }
