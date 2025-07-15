@@ -1,6 +1,6 @@
 <template>
   <div class="left-board" :style="{ '--grid-row-height': rowHeight + 'px', '--min-rows': minRows }">
-    <!-- {{ localReports }} -->
+    {{ localReports }}
     <div v-if="localReports.length" class="charts-container">
       <GridLayout
         :layout="layout"
