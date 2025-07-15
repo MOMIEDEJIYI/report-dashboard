@@ -1,6 +1,6 @@
 <template>
   <div class="left-board" :style="{ '--grid-row-height': rowHeight + 'px', '--min-rows': minRows }">
-    {{ localReports }}
+    <!-- {{ localReports }} -->
     <div v-if="localReports.length" class="charts-container">
       <GridLayout
         :layout="layout"
@@ -40,7 +40,7 @@
     </div>
 
     <div v-else class="empty-state">
-      请从右侧选择或创建一个报表
+      请选择或创建一个报表
     </div>
   </div>
 </template>
@@ -48,21 +48,14 @@
 <script>
 import { GridLayout, GridItem } from 'vue-grid-layout'
 import { mapState } from 'vuex'
+import { loadComponentMap } from '@/utils/loadComponents'
 import UnknownReport from './report-types/UnknownReport.vue'
 
-const requireComponent = require.context(
+const reportTypeMap = loadComponentMap(require.context(
   './report-types',
   false,
   /[A-Z]\w+\.vue$/
-)
-
-const reportTypeMap = {}
-requireComponent.keys().forEach(fileName => {
-  const componentConfig = requireComponent(fileName)
-  const component = componentConfig.default || componentConfig
-  const name = fileName.replace(/^\.\/(.*)\.\w+$/, '$1').toLowerCase()
-  reportTypeMap[name] = component
-})
+))
 
 export default {
   name: 'LeftBoard',
@@ -104,6 +97,9 @@ export default {
       const key = report.componentName?.toLowerCase?.()
       if (key && reportTypeMap[key]) {
         return reportTypeMap[key]
+      }
+      if (key) {
+        reportTypeMap.suggestClosest?.(key)
       }
       return UnknownReport
     },

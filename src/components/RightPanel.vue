@@ -1,136 +1,51 @@
 <template>
   <div class="right-panel">
-    <!-- 报表列表 -->
-    <div class="report-list">
-      <div 
-        v-for="report in reportList" 
-        :key="report.id"
-        class="report-item"
-        :class="{ 'selected': report.id === selectedReportId }"
-        @click="selectReport(report.id)"
-      >
-        {{ report.name }}
-      </div>
-    </div>
-
-    <!-- 配置面板 -->
     <div v-if="selectedReport" class="config-form">
-      <h3>报表配置</h3>
-
-      <!-- 基本信息 -->
-      <div class="form-section">
-        <h4>基本信息</h4>
-        <div class="form-group">
-          <label>报表名称</label>
-          <input v-model="selectedReport.name" @change="updateReport" />
-        </div>
-      </div>
-
-      <!-- 图表配置 -->
-      <div v-if="selectedReport.componentName === 'EChartRenderer'" class="form-section">
-        <h4>图表配置</h4>
-        <div class="form-group">
-          <label>图表类型</label>
-          <select v-model="selectedReport.config.chartType" @change="updateReport">
-            <option value="line">折线图</option>
-            <option value="bar">柱状图</option>
-            <option value="pie">饼图</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>
-            <input type="checkbox" v-model="selectedReport.config.showLegend" @change="updateReport" />
-            显示图例
-          </label>
-        </div>
-        <div class="form-group">
-          <label>标题</label>
-          <input v-model="selectedReport.config.title" @change="updateReport" />
-        </div>
-      </div>
-
-      <!-- 统计卡片配置 -->
-      <div v-if="selectedReport.componentName === 'SummaryCard'" class="form-section">
-        <h4>统计卡片配置</h4>
-        <div class="form-group">
-          <label>标题</label>
-          <input v-model="selectedReport.name" @change="updateReport" />
-        </div>
-        <div class="form-group">
-          <label>总额</label>
-          <input type="number" v-model.number="selectedReport.dataSource.data.total" @change="updateReport" />
-        </div>
-        <div class="form-group">
-          <label>增长率 (%)</label>
-          <input type="number" v-model.number="selectedReport.dataSource.data.growth" @change="updateReport" />
-        </div>
-      </div>
-
-      <!-- 表格类型拓展（可选） -->
-      <div v-if="selectedReport.componentName === 'TableRenderer'" class="form-section">
-        <h4>表格配置</h4>
-        <div class="form-group">
-          <label>标题</label>
-          <input v-model="selectedReport.config.title" @change="updateReport" />
-        </div>
-        <div class="form-group">
-          <label>显示字段</label>
-          <input v-model="selectedReport.config.visibleFields" @change="updateReport" />
-          <small>多个字段用英文逗号分隔</small>
-        </div>
-      </div>
-
-      <!-- 数据源配置（图表和表格通用） -->
-      <div v-if="selectedReport.componentName !== 'SummaryCard'" class="form-section">
-        <h4>数据源配置</h4>
-        <div class="form-group">
-          <label>数据源类型</label>
-          <select v-model="selectedReport.dataSource.type" @change="updateReport">
-            <option value="static">静态数据</option>
-            <option value="api">API接口</option>
-          </select>
-        </div>
-        <div v-if="selectedReport.dataSource.type === 'api'" class="form-group">
-          <label>API地址</label>
-          <input v-model="selectedReport.dataSource.url" @change="updateReport" />
-        </div>
-        <div class="form-group">
-          <label>维度字段</label>
-          <input v-model="selectedReport.dataSource.fields[0]" @change="updateReport" />
-        </div>
-        <div class="form-group">
-          <label>指标字段</label>
-          <input v-model="selectedReport.dataSource.fields[1]" @change="updateReport" />
-        </div>
-      </div>
+      <component
+        v-if="configComponent"
+        :is="configComponent"
+        :report="selectedReport"
+        @updateReport="updateReport"
+      />
+      <p v-else>未找到对应的配置组件</p>
     </div>
   </div>
 </template>
 
 <script>
 import { mapState } from 'vuex'
+import { loadComponentMap } from '@/utils/loadComponents'
+
+const configComponentsMap = loadComponentMap(
+  require.context('./report-configs', false, /[A-Z]\w+\.vue$/)
+)
 
 export default {
   name: 'RightPanel',
   computed: {
     ...mapState(['reportList', 'selectedReportId']),
+
     selectedReport() {
       return this.reportList.find(r => r.id === this.selectedReportId) || null
+    },
+    configComponent() {
+      if (!this.selectedReport) return null
+      const nameKey = (
+        this.selectedReport.configComponentName ||
+        this.selectedReport.componentName + 'Config'
+      ).toLowerCase()
+      const component = configComponentsMap[nameKey]
+      if (!component) configComponentsMap.suggestClosest(nameKey)
+
+      return component || null
     }
   },
   methods: {
-    selectReport(reportId) {
-      this.$store.commit('setSelectedReportId', reportId)
+    selectReport(id) {
+      this.$store.commit('setSelectedReportId', id)
     },
-    updateReport() {
-      if (!this.selectedReport) return
-
-      // 修复缺失字段情况
-      if (!this.selectedReport.dataSource.fields) {
-        this.$set(this.selectedReport.dataSource, 'fields', ['category', 'value'])
-      }
-
-      this.$store.commit('updateReport', this.selectedReport)
+    updateReport(updatedReport) {
+      this.$store.commit('updateReport', updatedReport)
     }
   }
 }

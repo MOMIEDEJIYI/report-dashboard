@@ -1,6 +1,7 @@
 export const ReportTypeDefaults = {
   sales: {
     componentName: 'EChartRenderer', // 组件的名字
+    configComponentName: 'EchartRendererConfig', // 加载的组件配置
     config: {
       chartType: 'line',
       title: '销售图表',
@@ -18,6 +19,7 @@ export const ReportTypeDefaults = {
   },
   inventory: {
     componentName: 'EChartRenderer',
+    configComponentName: 'EchartRendererConfig',
     config: {
       chartType: 'bar',
       title: '库存报表',
@@ -34,6 +36,7 @@ export const ReportTypeDefaults = {
   },
   customer: {
     componentName: 'EChartRenderer',
+    configComponentName: 'EchartRendererConfig',
     config: {
       chartType: 'pie',
       title: '客户区域',
@@ -50,6 +53,7 @@ export const ReportTypeDefaults = {
   },
   summary: {
     componentName: 'SummaryCard',
+    configComponentName: 'SummaryCardConfig',
     config: {
       title: '本月统计'
     },
