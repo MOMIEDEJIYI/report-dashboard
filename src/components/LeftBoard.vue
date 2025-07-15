@@ -253,6 +253,16 @@ export default {
   border-radius: 3px;
   pointer-events: auto;
 }
+
+.report-body {
+  width: 100%;
+  height: 100%;
+  /* 避免子组件内容溢出 */
+  overflow: hidden;
+  /* 如果需要让echarts填满整个区域 */
+  display: block;
+}
+
 </style>
 
 <style>

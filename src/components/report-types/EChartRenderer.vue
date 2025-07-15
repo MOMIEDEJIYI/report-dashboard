@@ -12,9 +12,20 @@ export default {
     return { chart: null }
   },
   mounted() {
-    this.chart = echarts.init(this.$refs.chartContainer)
-    this.setChartOption()
-    window.addEventListener('resize', this.resize)
+    this.$nextTick(() => {
+      // 延迟一点再执行，确保父容器尺寸计算完成
+      setTimeout(() => {
+        const container = this.$refs.chartContainer
+        if (!container || container.clientWidth === 0 || container.clientHeight === 0) {
+          // 尝试重试一次
+          this.waitForRenderThenInit()
+        } else {
+          this.chart = echarts.init(container)
+          this.setChartOption()
+        }
+        window.addEventListener('resize', this.resize)
+      }, 0)
+    })
   },
   watch: {
     report: {
