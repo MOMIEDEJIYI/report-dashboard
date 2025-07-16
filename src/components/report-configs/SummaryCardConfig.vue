@@ -18,7 +18,7 @@
       <input
         id="summary-total"
         type="number"
-        v-model.number="localReport.dataSource.data.total"
+        v-model.number="localReport.data.total"
         @change="emitUpdate"
         placeholder="本月总额"
       />
@@ -29,7 +29,7 @@
       <input
         id="summary-growth"
         type="number"
-        v-model.number="localReport.dataSource.data.growth"
+        v-model.number="localReport.data.growth"
         @change="emitUpdate"
         placeholder="同比增长 (%)"
       />

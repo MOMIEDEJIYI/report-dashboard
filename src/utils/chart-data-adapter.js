@@ -6,23 +6,22 @@
  * @returns 适配后的数据
  */
 export function transformChartData(report) {
-  const type = report.config?.chartType || 'line'
-  const source = report.data?.source
-  const fields = report.dataSource?.fields || []
+  const type = report.config?.chartType || 'line';
+  const source = report.data?.source;
+  const fields = report.dataSource?.fields || [];
 
   if (!Array.isArray(source) || source.length <= 1) {
-    return fallbackOption(type)
+    return fallbackOption(type);
   }
 
-  const title = report.config?.title || ''
-  const showLegend = report.config?.showLegend !== false
+  const title = report.config?.title || '';
+  const showLegend = report.config?.showLegend !== false;
 
-  // 饼图处理
   if (type === 'pie') {
     const pieData = source.slice(1).map(row => ({
       name: row[0],
       value: row[1]
-    }))
+    }));
 
     return {
       title: { text: title, left: 'center' },
@@ -44,33 +43,36 @@ export function transformChartData(report) {
           }
         }
       }]
-    }
+    };
   }
 
-  // 折线图 / 柱状图处理
-  const measure = fields[1] || source[0]?.[1]
+  // 多指标字段支持，动态生成series
+  // fields[0]是维度，后面都是指标
+  const metrics = fields.slice(1);
+  const series = metrics.map(metric => ({
+    type,
+    name: metric,
+    encode: {
+      x: fields[0],
+      y: metric
+    },
+    showSymbol: true,
+    smooth: true
+  }));
+
   return {
     title: { text: title, left: 'center' },
     tooltip: { trigger: 'axis' },
     legend: {
       show: showLegend,
-      data: [measure],
+      data: metrics,
       bottom: 10
     },
     dataset: { source },
     xAxis: { type: 'category', axisLabel: { interval: 0, rotate: 30 } },
     yAxis: {},
-    series: [{
-      type: type,
-      name: measure,
-      encode: {
-        x: fields[0] || source[0]?.[0],
-        y: fields[1] || source[0]?.[1]
-      },
-      showSymbol: true,
-      smooth: true
-    }]
-  }
+    series
+  };
 }
 
 function fallbackOption(type) {

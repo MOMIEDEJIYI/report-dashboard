@@ -42,8 +42,7 @@ export default {
         dataSource: {
           type: 'static',
           fields: defaults.fields || ['category', 'value'],
-          url: '',
-          data: _cloneDeep(defaults.data) || {}
+          url: ''
         },
         x: (this.$store.state.reportList.length * 4) % 12,
         y: Math.floor(this.$store.state.reportList.length / 3) * 8,

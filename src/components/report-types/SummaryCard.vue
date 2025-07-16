@@ -1,8 +1,8 @@
 <template>
   <div class="summary-card">
     <h3>{{ report.config.title }}</h3>
-    <p>本月总额：￥{{ report.dataSource?.data?.total ?? 'N/A' }}</p>
-    <p>同比增长：{{ formatGrowth(report.dataSource?.data?.growth) }}</p>
+    <p>本月总额：￥{{ report?.data?.total ?? 'N/A' }}</p>
+    <p>同比增长：{{ formatGrowth(report?.data?.growth) }}</p>
   </div>
 </template>
 

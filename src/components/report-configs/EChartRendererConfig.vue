@@ -45,7 +45,8 @@
       <div class="form-group" v-if="localReport.dataSource.type === 'api'">
         <label for="api-url">API地址</label>
         <input id="api-url" type="text" v-model="localReport.dataSource.url" @input="emitUpdate" placeholder="API地址" />
-      </div>
+        <button @click="fetchApiData" style="margin-top: 8px;">拉取数据</button>
+    </div>
 
       <div class="form-group">
         <label for="dimension-field">维度字段</label>
@@ -80,6 +81,26 @@ export default {
   methods: {
     emitUpdate() {
       this.$emit('updateReport', this.localReport)
+    },
+    async fetchApiData() {
+      const url = this.localReport.dataSource.url
+      if (!url) {
+        alert('请先填写API地址')
+        return
+      }
+      try {
+        const res = await fetch(url)
+        if (!res.ok) throw new Error(`请求失败，状态码: ${res.status}`)
+        const data = await res.json()
+        this.localReport.data = this.localReport.data || {}
+        this.localReport.data.source = data
+
+        // 触发配置更新，通知父组件更新数据
+        this.emitUpdate()
+        alert('数据更新成功')
+      } catch (err) {
+        alert('拉取数据失败: ' + err.message)
+      }
     }
   }
 }
