@@ -14,7 +14,7 @@
       <h4 class="section-title">图表配置</h4>
       <div class="form-group">
         <label for="chart-type">图表类型</label>
-        <select id="chart-type" v-model="localReport.config.chartType" @change="emitUpdate">
+        <select id="chart-type" v-model="localReport.config.chartType" @change="handleChartTypeChange">
           <option value="line">折线图</option>
           <option value="bar">柱状图</option>
           <option value="pie">饼图</option>
@@ -53,7 +53,16 @@
         <input id="dimension-field" type="text" v-model="localReport.dataSource.fields[0]" @input="emitUpdate" placeholder="维度字段" />
       </div>
 
-      <div class="form-group">
+      
+      <div class="form-group" v-if="localReport.config.chartType === 'pie' && localReport.dataSource.fields.length > 2">
+        <label for="metric-select">饼图指标</label>
+        <select id="metric-select" v-model="localReport.config.selectedMetricIndex" @change="emitUpdate">
+          <option v-for="(field, idx) in localReport.dataSource.fields.slice(1)" :key="idx" :value="idx + 1">
+            {{ field }}
+          </option>
+        </select>
+      </div>
+      <div v-else class="form-group">
         <label for="metric-field">指标字段</label>
         <input id="metric-field" type="text" v-model="localReport.dataSource.fields[1]" @input="emitUpdate" placeholder="指标字段" />
       </div>
@@ -79,6 +88,23 @@ export default {
     }
   },
   methods: {
+    handleChartTypeChange(e) {
+      const newType = e.target.value
+      this.localReport.config.chartType = newType
+
+      if (newType === 'pie') {
+        const fields = this.localReport.dataSource?.fields || []
+        // 默认选择第一个指标（即 fields[1]，索引为1）
+        if (!this.localReport.config.selectedMetricIndex || fields.length <= this.localReport.config.selectedMetricIndex) {
+          this.localReport.config.selectedMetricIndex = 1
+        }
+      } else {
+        // 非饼图就可以不使用 selectedMetricIndex
+        delete this.localReport.config.selectedMetricIndex
+      }
+
+      this.emitUpdate()
+    },
     emitUpdate() {
       this.$emit('updateReport', this.localReport)
     },

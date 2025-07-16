@@ -56,7 +56,7 @@ export default {
     setChartOption() {
       if (!this.chart) return
       const option = transformChartData(this.report)
-      this.chart.setOption(option)
+      this.chart.setOption(option, true)
       this.chart.resize()
     },
     resize() {

@@ -18,14 +18,24 @@ export function transformChartData(report) {
   const showLegend = report.config?.showLegend !== false;
 
   if (type === 'pie') {
+    const idx = report.config.selectedMetricIndex || 1;
+    const metricName = fields[idx] || `指标${idx}`;
+
     const pieData = source.slice(1).map(row => ({
       name: row[0],
-      value: row[1]
+      value: row[idx]
     }));
 
     return {
       title: { text: title, left: 'center' },
-      tooltip: { trigger: 'item' },
+      tooltip: {
+        trigger: 'item',
+        formatter: params => {
+          // name 是维度，value 是指标值
+          const colorDot = `<span style="display:inline-block;margin-right:6px;border-radius:10px;width:10px;height:10px;background-color:${params.color};"></span>`;
+          return `${colorDot}${params.name}<br/>${metricName}: ${params.value}`;
+        }
+      },
       legend: {
         show: showLegend,
         orient: 'vertical',
@@ -46,8 +56,7 @@ export function transformChartData(report) {
     };
   }
 
-  // 多指标字段支持，动态生成series
-  // fields[0]是维度，后面都是指标
+  // line/bar 多指标处理不变
   const metrics = fields.slice(1);
   const series = metrics.map(metric => ({
     type,

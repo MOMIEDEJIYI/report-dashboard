@@ -1,5 +1,6 @@
 export const ReportTypeDefaults = {
   sales: {
+    name: '销售报表',
     componentName: 'EChartRenderer',
     configComponentName: 'EchartRendererConfig',
     config: {
@@ -28,6 +29,7 @@ export const ReportTypeDefaults = {
   },
 
   inventory: {
+    name: '库存报表',
     componentName: 'EChartRenderer',
     configComponentName: 'EchartRendererConfig',
     config: {
@@ -49,6 +51,7 @@ export const ReportTypeDefaults = {
   },
 
   customer: {
+    name: '客户分析',
     componentName: 'EChartRenderer',
     configComponentName: 'EchartRendererConfig',
     config: {
@@ -66,6 +69,35 @@ export const ReportTypeDefaults = {
         ['西南', 500],
         ['东北', 300],
         ['西北', 200]
+      ]
+    }
+  },
+  multiMetrics: {
+    name: '销售与利润趋势',
+    componentName: 'EChartRenderer',
+    configComponentName: 'EchartRendererConfig',
+    config: {
+      chartType: 'line',
+      title: '年度销售与利润趋势',
+      showLegend: true,
+      selectedMetricIndex: 1
+    },
+    fields: ['月份', '销售额', '利润'], // 多个指标字段
+    data: {
+        source: [
+        ['月份', '销售额', '利润'],
+        ['1月', 1200, 400],
+        ['2月', 1500, 450],
+        ['3月', 1700, 480],
+        ['4月', 2100, 530],
+        ['5月', 2600, 600],
+        ['6月', 2400, 580],
+        ['7月', 3000, 650],
+        ['8月', 3200, 700],
+        ['9月', 3100, 680],
+        ['10月', 3300, 720],
+        ['11月', 4000, 750],
+        ['12月', 4600, 800]
       ]
     }
   },

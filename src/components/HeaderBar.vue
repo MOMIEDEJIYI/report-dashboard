@@ -14,17 +14,28 @@
 </template>
 
 <script>
+import { ReportTypeDefaults } from '@/config/reportTypes.js'
+
 export default {
   name: 'HeaderBar',
-  props: {
-    reports: {
-      type: Array,
-      default: () => [
-        { id: 'sales', name: '销售报表' },
-        { id: 'inventory', name: '库存报表' },
-        { id: 'customer', name: '客户分析' },
-        { id: 'summary', name: '自定义统计卡片' }
-      ]
+  // props: {
+  //   reports: {
+  //     type: Array,
+  //     default: () => [
+  //       { id: 'sales', name: '销售报表' },
+  //       { id: 'inventory', name: '库存报表' },
+  //       { id: 'customer', name: '客户分析' },
+  //       { id: 'summary', name: '自定义统计卡片' }
+  //     ]
+  //   }
+  // },
+  computed: {
+    reports() {
+      // 从配置对象的键和值构造按钮列表
+      return Object.entries(ReportTypeDefaults).map(([id, cfg]) => ({
+        id,
+        name: cfg.name || (cfg.config && cfg.config.title) || id
+      }))
     }
   },
   methods: {
