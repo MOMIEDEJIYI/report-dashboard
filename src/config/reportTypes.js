@@ -1,6 +1,7 @@
 export const ReportTypeDefaults = {
   sales: {
     name: '销售报表',
+    group: '业务报表',
     componentName: 'EChartRenderer',
     configComponentName: 'EchartRendererConfig',
     config: {
@@ -30,6 +31,7 @@ export const ReportTypeDefaults = {
 
   inventory: {
     name: '库存报表',
+    group: '业务报表',
     componentName: 'EChartRenderer',
     configComponentName: 'EchartRendererConfig',
     config: {
@@ -52,6 +54,7 @@ export const ReportTypeDefaults = {
 
   customer: {
     name: '客户分析',
+    group: '业务报表',
     componentName: 'EChartRenderer',
     configComponentName: 'EchartRendererConfig',
     config: {
@@ -74,6 +77,7 @@ export const ReportTypeDefaults = {
   },
   multiMetrics: {
     name: '销售与利润趋势',
+    group: '财务报表',
     componentName: 'EChartRenderer',
     configComponentName: 'EchartRendererConfig',
     config: {
@@ -103,6 +107,8 @@ export const ReportTypeDefaults = {
   },
 
   summary: {
+    name: '运营统计',
+    group: '财务报表',
     componentName: 'SummaryCard',
     configComponentName: 'SummaryCardConfig',
     config: {

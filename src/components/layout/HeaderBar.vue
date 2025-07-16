@@ -1,14 +1,23 @@
 <template>
   <div class="header-bar">
     <div class="report-buttons">
-      <button
-        v-for="report in reports"
-        :key="report.id"
-        class="report-button"
-        @click="handleClick(report)"
+      <div
+        v-for="(groupReports, groupName) in groupedReports"
+        :key="groupName"
+        class="report-group"
       >
-        {{ report.name }}
-      </button>
+        <span class="group-title">{{ groupName }}</span>
+        <div class="dropdown-menu">
+          <button
+            v-for="report in groupReports"
+            :key="report.id"
+            class="report-button"
+            @click="handleClick(report)"
+          >
+            {{ report.name }}
+          </button>
+        </div>
+      </div>
     </div>
     <div class="import-export">
       <button @click="exportJson" :disabled="reportList.length === 0">导出 JSON</button>
@@ -41,12 +50,17 @@ export default {
   components: { ConfirmDialog },
   computed: {
     ...mapState(['reportList']),
-    reports() {
-      // 从配置对象的键和值构造按钮列表
-      return Object.entries(ReportTypeDefaults).map(([id, config]) => ({
-        id,
-        name: config.config?.title || id
-      }))
+    groupedReports() {
+      const groups = {}
+      Object.entries(ReportTypeDefaults).forEach(([id, config]) => {
+        const group = config.group || '未分组'
+        if (!groups[group]) groups[group] = []
+        groups[group].push({
+          id,
+          name: config.config?.title || id
+        })
+      })
+      return groups
     }
   },
   data() {
@@ -153,23 +167,65 @@ export default {
   align-items: center;
   justify-content: space-between;
 }
-
 .report-buttons {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 16px;
+  max-height: 40px;
 }
-
-.report-button {
-  padding: 8px 16px;
+.report-group {
+  position: relative;
+  display: inline-block;
+  margin-right: 16px;
+}
+.group-title {
+  position: relative;
+  cursor: pointer;
+  padding: 6px 12px;
   background-color: #409eff;
   color: white;
-  border: none;
   border-radius: 4px;
-  cursor: pointer;
+  user-select: none;
+  display: inline-block;
 }
 
-.report-button:hover {
-  background-color: #66b1ff;
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  border-radius: 4px;
+  padding: 8px 12px;
+  z-index: 1000;
+  min-width: 160px;
+  white-space: nowrap;
+}
+
+/* 悬浮显示弹层 */
+.report-group:hover .dropdown-menu {
+  display: block;
+}
+
+/* 弹层内按钮垂直排列 */
+.dropdown-menu .report-button {
+  display: block;
+  width: 100%;
+  margin-bottom: 6px;
+  background-color: transparent;
+  color: #333;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-menu .report-button:hover {
+  background-color: #f0f5ff;
+  color: #409eff;
 }
 
 .import-export > button {
