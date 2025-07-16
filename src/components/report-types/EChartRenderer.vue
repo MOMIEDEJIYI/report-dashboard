@@ -60,12 +60,47 @@ export default {
       this.chart.resize()
     },
     getOption() {
-      const measure = this.report.dataSource?.fields?.[1] || 'value'
+      const type = this.report.config?.chartType || 'line'
+      const title = this.report.config?.title || '未命名报表'
+      const showLegend = this.report.config?.showLegend !== false
+      const [dimension = '维度', measure = '指标'] = this.report.dataSource?.fields || []
+
+      if (type === 'pie') {
+        const source = this.getData().slice(1) // 排除表头
+        const pieData = source.map(item => ({
+          name: item[0],
+          value: item[1]
+        }))
+
+        return {
+          title: { text: title, left: 'center' },
+          tooltip: { trigger: 'item' },
+          legend: {
+            show: showLegend,
+            orient: 'vertical',
+            left: 'left',
+          },
+          series: [{
+            type: 'pie',
+            radius: '60%',
+            data: pieData,
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowOffsetX: 0,
+                shadowColor: 'rgba(0, 0, 0, 0.5)'
+              }
+            }
+          }]
+        }
+      }
+
+      // 默认折线/柱状图配置
       return {
-        title: { text: this.report.config?.title || '未命名报表', left: 'center' },
+        title: { text: title, left: 'center' },
         tooltip: { trigger: 'axis' },
         legend: {
-          show: this.report.config?.showLegend !== false,
+          show: showLegend,
           data: [measure],
           bottom: 10,
         },
@@ -73,11 +108,11 @@ export default {
         xAxis: { type: 'category', axisLabel: { interval: 0, rotate: 30 } },
         yAxis: {},
         series: [{
-          type: this.report.config?.chartType || 'line',
+          type: type,
           name: measure,
           encode: {
-            x: this.report.dataSource?.fields?.[0],
-            y: this.report.dataSource?.fields?.[1]
+            x: dimension,
+            y: measure
           },
           showSymbol: true,
           smooth: true,
