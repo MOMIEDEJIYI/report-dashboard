@@ -38,6 +38,7 @@ export default {
         componentName: defaults.componentName || reportType.componentName || reportType.id,
         name: `${reportType.name} ${this.$store.state.reportList.length + 1}`,
         config: _cloneDeep(defaults.config) || {},
+        data: _cloneDeep(defaults.data) || {},
         dataSource: {
           type: 'static',
           fields: defaults.fields || ['category', 'value'],
