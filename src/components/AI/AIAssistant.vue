@@ -73,6 +73,27 @@ export default {
         const el = this.$refs.chatBox
         el.scrollTop = el.scrollHeight
       })
+    },
+    async sendMessage() {
+      this.loading = true
+      try {
+        const res = await fetch('http://127.0.0.1:8000/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            user_id: 'default',  // 你也可以绑定用户 ID
+            message: this.inputText
+          })
+        })
+        const data = await res.json()
+        this.chatHistory.push({ role: 'ai', text: data.reply })
+      } catch (err) {
+        console.error('发送失败:', err)
+      } finally {
+        this.loading = false
+      }
     }
   }
 }
