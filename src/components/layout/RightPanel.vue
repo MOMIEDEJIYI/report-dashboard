@@ -17,7 +17,7 @@ import { mapState } from 'vuex'
 import { loadComponentMap } from '@/utils/loadComponents'
 
 const configComponentsMap = loadComponentMap(
-  require.context('./report-configs', false, /[A-Z]\w+\.vue$/)
+  require.context('@/components/report-configs', false, /[A-Z]\w+\.vue$/)
 )
 
 export default {

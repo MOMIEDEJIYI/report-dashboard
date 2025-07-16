@@ -16,20 +16,29 @@
         ref="fileInput"
         type="file"
         accept=".json,application/json"
-        @change="importJson"
+        @change="handleFileSelected"
         style="display:none"
       />
       <button @click="triggerFileInput">导入 JSON</button>
     </div>
+
+    <ConfirmDialog
+      :visible="showConfirm"
+      message="当前已有报表，导入将覆盖原有数据，是否确认？"
+      @confirm="confirmImport"
+      @cancel="cancelImport"
+    />
   </div>
 </template>
 
 <script>
 import { ReportTypeDefaults } from '@/config/reportTypes.js'
 import { mapState } from 'vuex'
+import ConfirmDialog from '@/components/base/ConfirmDialog.vue'
 
 export default {
   name: 'HeaderBar',
+  components: { ConfirmDialog },
   computed: {
     ...mapState(['reportList']),
     reports() {
@@ -38,6 +47,12 @@ export default {
         id,
         name: config.config?.title || id
       }))
+    }
+  },
+  data() {
+    return {
+      showConfirm: false,
+      pendingFile: null
     }
   },
   methods: {
@@ -57,6 +72,50 @@ export default {
     triggerFileInput() {
       this.$refs.fileInput.click()
     },
+    handleFileSelected(e) {
+      const file = e.target.files[0]
+      if (!file) return
+      this.pendingFile = file
+
+      // 有内容时弹出提示
+      if (this.reportList.length > 0) {
+        this.showConfirm = true
+      } else {
+        this.readAndImport(file)
+      }
+
+      e.target.value = ''
+    },
+    cancelImport() {
+      this.showConfirm = false
+      this.pendingFile = null
+    },
+    confirmImport() {
+      this.showConfirm = false
+      if (this.pendingFile) {
+        this.readAndImport(this.pendingFile)
+        this.pendingFile = null
+      }
+    },
+    readAndImport(file) {
+      const reader = new FileReader()
+      reader.onload = evt => {
+        try {
+          const json = JSON.parse(evt.target.result)
+          if (!Array.isArray(json)) {
+            alert('导入文件格式不正确，应该是报表数组')
+            return
+          }
+          this.$store.state.reportList = []
+          json.forEach(report => {
+            this.$store.commit('addReport', report)
+          })
+        } catch (err) {
+          alert('解析JSON失败: ' + err.message)
+        }
+      }
+      reader.readAsText(file)
+    },
     importJson(e) {
       const file = e.target.files[0]
       if (!file) return
@@ -68,14 +127,12 @@ export default {
             alert('导入文件格式不正确，应该是报表数组')
             return
           }
-          // 清空原有报表（可选）
+          // 清空原有报表
           this.$store.state.reportList = []
-
           // 调用 mutation 一个个添加报表
           json.forEach(report => {
             this.$store.commit('addReport', report)
           })
-          alert('导入成功')
         } catch (err) {
           alert('解析JSON失败: ' + err.message)
         }

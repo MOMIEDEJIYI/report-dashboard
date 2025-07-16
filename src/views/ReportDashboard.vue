@@ -8,8 +8,8 @@
 </template>
 
 <script>
-import HeaderBar from '@/components/HeaderBar.vue'
-import MainContent from '@/components/MainContent.vue'
+import HeaderBar from '@/components/layout/HeaderBar.vue'
+import MainContent from '@/components/layout/MainContent.vue'
 import _cloneDeep from 'lodash/cloneDeep'
 import { mapActions, mapMutations } from 'vuex'
 import { ReportTypeDefaults } from '@/config/reportTypes'

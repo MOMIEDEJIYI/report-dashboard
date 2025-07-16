@@ -49,13 +49,11 @@
 import { GridLayout, GridItem } from 'vue-grid-layout'
 import { mapState } from 'vuex'
 import { loadComponentMap } from '@/utils/loadComponents'
-import UnknownReport from './report-types/UnknownReport.vue'
+import UnknownReport from '@/components/report-types/UnknownReport.vue'
 
-const reportTypeMap = loadComponentMap(require.context(
-  './report-types',
-  false,
-  /[A-Z]\w+\.vue$/
-))
+const reportTypeMap = loadComponentMap(
+  require.context('@/components/report-types',  false,  /[A-Z]\w+\.vue$/)
+)
 
 export default {
   name: 'LeftBoard',
