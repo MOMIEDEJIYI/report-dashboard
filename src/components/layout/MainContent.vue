@@ -11,11 +11,14 @@
 
     <div class="resizer" @mousedown="startDragging" :style="{ width: resizerWidth + 'px' }"></div>
 
+    <!-- RightPanel 保持在后 -->
     <div class="right-panel" :style="{ width: rightWidth + 'px' }">
-      <RightPanel
-        @select="handleSelect"
-        @update-report="handleUpdate"
-      />
+      <RightPanel @select="handleSelect" @update-report="handleUpdate" />
+      
+      <!-- AI 助手浮层：绝对定位 + 过渡 -->
+      <transition name="slide-in">
+        <AIAssistant v-if="showAI" class="ai-float-panel" @close="$emit('close-ai')"/>
+      </transition>
     </div>
   </div>
 </template>
@@ -24,15 +27,22 @@
 import { mapState, mapMutations } from 'vuex'
 import LeftBoard from './LeftBoard.vue'
 import RightPanel from './RightPanel.vue'
+import AIAssistant from '../AI/AIAssistant.vue'
 
 export default {
   name: 'MainContent',
-  components: { LeftBoard, RightPanel },
+  components: { LeftBoard, RightPanel, AIAssistant },
   data() {
     return {
       isDragging: false,
       rightWidth: 400,
       resizerWidth: 5
+    }
+  },
+  props: {
+    showAI: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
@@ -117,4 +127,49 @@ export default {
   min-width: 400px;
   max-width: 600px;
 }
+.right-panel {
+  position: relative; /* 让浮层相对定位于此 */
+  height: 100%;
+  overflow: hidden;
+}
+
+.ai-float-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+/* 动画关键帧 */
+.slide-in-enter-active {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+.slide-in-leave-active {
+  animation: slideOutRight 0.3s ease-out forwards;
+}
+@keyframes slideInRight {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0%);
+    opacity: 1;
+  }
+}
+@keyframes slideOutRight {
+  0% {
+    transform: translateX(0%);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
 </style>

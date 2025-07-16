@@ -1,9 +1,10 @@
 <template>
   <div class="report-dashboard">
-    <HeaderBar @create-report="handleCreateReport" />
-    <MainContent
-      :rightWidth.sync="rightWidth"
+    <HeaderBar
+      @create-report="handleCreateReport"
+      @open-ai-assistant="handleOpenAI"
     />
+    <MainContent :showAI="showAI" @close-ai="showAI = false"/>
   </div>
 </template>
 
@@ -21,7 +22,7 @@ export default {
   },
   data() {
     return {
-      rightWidth: 400,
+      showAI: false
     }
   },
   methods: {
@@ -29,6 +30,7 @@ export default {
     ...mapMutations(['setSelectedReportId']),
     
     async handleCreateReport(reportType) {
+      this.showAI = false
       const id = Date.now().toString()
       const defaults = ReportTypeDefaults[reportType.id] || {}
 
@@ -71,6 +73,9 @@ export default {
       }
       return fields[reportType] || ['category', 'value']
     },
+    handleOpenAI() {
+      this.showAI = true
+    }
   }
 }
 </script>

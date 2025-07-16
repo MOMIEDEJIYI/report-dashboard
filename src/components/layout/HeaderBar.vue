@@ -18,6 +18,9 @@
           </button>
         </div>
       </div>
+      <div class="ai-assistant" @click="handleAIClick" title="点击打开 AI 助手">
+        AI助手
+      </div>
     </div>
     <div class="import-export">
       <button @click="exportJson" :disabled="reportList.length === 0">导出 JSON</button>
@@ -70,6 +73,9 @@ export default {
     }
   },
   methods: {
+    handleAIClick() {
+      this.$emit('open-ai-assistant') // 触发父组件事件，或者你自己写具体逻辑
+    },
     handleClick(report) {
       this.$emit('create-report', report) // 通知父组件创建报表
     },
@@ -242,5 +248,24 @@ export default {
 .import-export > button:hover {
   background-color: #409eff;
   color: white;
+}
+
+.ai-assistant {
+  padding: 6px 12px;
+  background-color: #67c23a;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+}
+
+.ai-assistant:hover {
+  background-color: #85ce5b;
 }
 </style>
