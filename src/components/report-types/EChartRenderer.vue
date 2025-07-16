@@ -9,7 +9,10 @@ export default {
   name: 'EChart',
   props: ['report'],
   data() {
-    return { chart: null }
+    return {
+      chart: null,
+      ro: null 
+    }
   },
   mounted() {
     this.$nextTick(() => {
@@ -22,6 +25,11 @@ export default {
         } else {
           this.chart = echarts.init(container)
           this.setChartOption()
+          // 监听容器大小变化，避免缩小时图表超出报表显示
+          this.ro = new ResizeObserver(() => {
+            this.chart && this.chart.resize()
+          })
+          this.ro.observe(container)
         }
         window.addEventListener('resize', this.resize)
       }, 0)
@@ -39,6 +47,9 @@ export default {
     if (this.chart) {
       this.chart.dispose()
       window.removeEventListener('resize', this.resize)
+    }
+    if (this.ro) {
+      this.ro.disconnect()
     }
   },
   methods: {
@@ -76,7 +87,7 @@ export default {
     getData() {
       if (!this.report?.dataSource?.fields) return this.getFallbackData()
       const [dimension, measure] = this.report.dataSource.fields
-      // 模拟数据，真实业务请传入真实数据
+      // 模拟数据，真实业务要传入真实数据
       return [
         [dimension, measure],
         [dimension + '1', Math.round(Math.random() * 100)],

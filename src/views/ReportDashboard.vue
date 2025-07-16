@@ -53,7 +53,7 @@ export default {
         wGrid: 4,
         hGrid: 8
       }
-
+      console.log('newReport', JSON.stringify(newReport));
       await this.createReport(newReport)
       this.setSelectedReportId(id)
     },

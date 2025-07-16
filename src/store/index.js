@@ -22,6 +22,7 @@ export default new Vuex.Store({
         wGrid: report.wGrid || report.w || 4,
         hGrid: report.hGrid || report.h || 8
       }
+      console.log('create newReport', JSON.stringify(newReport));
       state.reportList = [...state.reportList, newReport]
     },
 
