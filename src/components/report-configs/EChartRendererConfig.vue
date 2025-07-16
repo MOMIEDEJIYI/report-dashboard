@@ -50,9 +50,20 @@
 
       <div class="form-group">
         <label for="dimension-field">维度字段</label>
-        <input id="dimension-field" type="text" v-model="localReport.dataSource.fields[0]" @input="emitUpdate" placeholder="维度字段" />
+        <select
+          id="dimension-field"
+          v-model="localReport.dataSource.fields[0]"
+          @change="emitUpdate"
+        >
+          <option
+            v-for="(field, index) in localReport.data?.source?.[0] || []"
+            :key="index"
+            :value="field"
+          >
+            {{ field }}
+          </option>
+        </select>
       </div>
-
       
       <div class="form-group" v-if="localReport.config.chartType === 'pie' && localReport.dataSource.fields.length > 2">
         <label for="metric-select">饼图指标</label>
