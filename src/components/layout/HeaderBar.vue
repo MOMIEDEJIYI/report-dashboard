@@ -46,7 +46,7 @@
 <script>
 import { ReportTypeDefaults } from '@/config/reportTypes.js'
 import { mapState } from 'vuex'
-import exportJsonFile from '@/utils/common-func-ai.js'
+import utils from '@/utils/index.js';
 import ConfirmDialog from '@/components/base/ConfirmDialog.vue'
 
 export default {
@@ -81,7 +81,7 @@ export default {
       this.$emit('create-report', report) // 通知父组件创建报表
     },
     exportJson() {
-      exportJsonFile(this.reportList, `reports_${Date.now()}.json`)
+      utils.exportJsonFile(this.reportList, `reports_${Date.now()}.json`)
     },
     triggerFileInput() {
       this.$refs.fileInput.click()

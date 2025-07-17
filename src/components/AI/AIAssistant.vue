@@ -50,6 +50,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex'
 import utils from '@/utils';
 
 export default {
@@ -75,6 +76,7 @@ export default {
     }
   },
   computed: {
+    ...mapState(['reportList']),
     visibleMessages() {
       return this.messages.filter(msg => msg.role !== 'system')
     }
@@ -168,12 +170,12 @@ export default {
         this.isSending = false
       }
     },
-    handleToolResult(toolResult, extraData) {
+    handleToolResult(toolResult) {
       const commandName = toolResult.command;
       const commandFn = utils[commandName];
 
       if (typeof commandFn === 'function') {
-        commandFn(extraData);
+        commandFn(this.reportList, `reports_${Date.now()}.json`);
       } else {
         console.warn(`未找到命令函数：${commandName}`);
       }
