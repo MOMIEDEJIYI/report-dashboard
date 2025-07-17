@@ -46,7 +46,7 @@
 <script>
 import { ReportTypeDefaults } from '@/config/reportTypes.js'
 import { mapState } from 'vuex'
-import exportJsonFile from '@/utils/export.js'
+import exportJsonFile from '@/utils/common-func-ai.js'
 import ConfirmDialog from '@/components/base/ConfirmDialog.vue'
 
 export default {

@@ -1,3 +1,4 @@
+// ai可以调用的函数
 export function exportJsonFile(data, filename = 'data.json') {
   const jsonStr = JSON.stringify(data, null, 2)
   const blob = new Blob([jsonStr], { type: 'application/json' })
@@ -8,3 +9,4 @@ export function exportJsonFile(data, filename = 'data.json') {
   a.click()
   URL.revokeObjectURL(url)
 }
+

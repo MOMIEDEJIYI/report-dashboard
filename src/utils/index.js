@@ -1,2 +1,2 @@
-import * as utils from './export.js';
+import * as utils from './common-func-ai.js';
 export default utils;

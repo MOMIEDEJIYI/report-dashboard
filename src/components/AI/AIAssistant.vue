@@ -88,6 +88,9 @@ export default {
   },
   methods: {
     toggleSessionList() {
+      if (this.sessions.length == 0) {
+        return
+      }
       this.showSessionList = !this.showSessionList;
     },
     async fetchSessions() {
