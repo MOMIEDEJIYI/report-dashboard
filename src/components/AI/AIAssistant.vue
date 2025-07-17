@@ -30,15 +30,18 @@
           v-for="(msg, index) in visibleMessages"
           :key="index"
           class="chat-message"
-          :class="msg.role"
+          :class="msg.role === 'user' ? 'user-message' : 'assistant-message'"
         >
-          <span class="msg-text">{{ msg.text }}</span>
+          <div class="bubble">
+            {{ msg.text }}
+          </div>
         </div>
       </template>
       <template v-else>
         <div class="empty-chat-tip">今天想问什么？</div>
       </template>
     </div>
+
 
     <div class="ai-input-area">
       <input
@@ -343,27 +346,62 @@ export default {
 }
 
 .chat-message {
-  margin-bottom: 10px;
-  max-width: 80%;
-  word-wrap: break-word;
+  display: flex;
+  margin: 8px 0;
+  padding: 0 12px;
 }
 
-.chat-message.user {
-  text-align: right;
-  margin-left: auto;
+.user-message {
+  justify-content: flex-end;
+}
+
+.assistant-message {
+  justify-content: flex-start;
+}
+
+.bubble {
+  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  position: relative;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* 用户气泡样式 */
+.user-message .bubble {
+  background-color: #d1eaff;
+  color: #000;
+  border-bottom-right-radius: 2px;
+}
+
+/* AI 气泡样式 */
+.assistant-message .bubble {
+  background-color: #f0f0f0;
   color: #333;
+  border-bottom-left-radius: 2px;
 }
 
-.chat-message.ai {
-  text-align: left;
-  margin-right: auto;
-  color: #409eff;
+/* 添加小三角 */
+.user-message .bubble::after {
+  content: "";
+  position: absolute;
+  right: -6px;
+  top: 10px;
+  border-width: 6px 0 6px 6px;
+  border-style: solid;
+  border-color: transparent transparent transparent #d1eaff;
 }
 
-.chat-message.system {
-  text-align: center;
-  font-size: 13px;
-  color: #aaa;
+.assistant-message .bubble::after {
+  content: "";
+  position: absolute;
+  left: -6px;
+  top: 10px;
+  border-width: 6px 6px 6px 0;
+  border-style: solid;
+  border-color: transparent #f0f0f0 transparent transparent;
 }
 
 .ai-input-area {
