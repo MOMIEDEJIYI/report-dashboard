@@ -7,6 +7,7 @@
         <div class="session-dropdown" ref="dropdown">
           <button class="history-button" @click="toggleSessionList">历史会话</button>
           <ul v-if="showSessionList" class="dropdown-list">
+            <li v-if="sessions.length === 0" class="empty-session">暂无会话</li>
             <li
               v-for="session in sessions"
               :key="session"
@@ -24,25 +25,34 @@
     </div>
 
     <div class="ai-content" ref="chatBox">
-      <div
-        v-for="(msg, index) in visibleMessages"
-        :key="index"
-        class="chat-message"
-        :class="msg.role"
-      >
-        <span class="msg-text">{{ msg.text }}</span>
-      </div>
+      <template v-if="chatRequest.session_id && visibleMessages.length > 0">
+        <div
+          v-for="(msg, index) in visibleMessages"
+          :key="index"
+          class="chat-message"
+          :class="msg.role"
+        >
+          <span class="msg-text">{{ msg.text }}</span>
+        </div>
+      </template>
+      <template v-else>
+        <div class="empty-chat-tip">今天想问什么？</div>
+      </template>
     </div>
 
     <div class="ai-input-area">
       <input
         v-model="chatRequest.message"
         @keyup.enter="handleSend"
-        :disabled="isSending"
+        :disabled="isSending || !chatRequest.session_id"
         class="ai-input"
-        placeholder="请输入问题..."
+        placeholder="请选择会话或新建聊天后输入..."
       />
-      <button class="send-button" @click="handleSend" :disabled="!chatRequest.message.trim() && !isSending">
+      <button
+        class="send-button"
+        @click="handleSend"
+        :disabled="(!chatRequest.message.trim() && !isSending) || !chatRequest.session_id"
+      >
         {{ isSending ? '中止' : '发送' }}
       </button>
     </div>
@@ -99,15 +109,24 @@ export default {
     },
     async fetchSessions() {
       try {
-        const res = await fetch(`http://127.0.0.1:8000/conversation/sessions?user_id=${this.chatRequest.user_id}`)
-        const data = await res.json()
-        this.sessions = data.sessions || []
-        if (!this.chatRequest.session_id && this.sessions.length > 0) {
-          this.chatRequest.session_id = this.sessions[0]
-          this.loadHistory()
+        const res = await fetch(`http://127.0.0.1:8000/conversation/sessions?user_id=${this.chatRequest.user_id}`);
+        const data = await res.json();
+        this.sessions = data.sessions || [];
+        if (this.sessions.length > 0) {
+          // 如果当前session_id已被删除或空，默认切换到第一个
+          if (!this.sessions.includes(this.chatRequest.session_id)) {
+            this.chatRequest.session_id = this.sessions[0];
+          }
+          await this.loadHistory();
+        } else {
+          // 没有会话了，清空当前会话和消息
+          this.chatRequest.session_id = '';
+          this.messages = [];
         }
+        return this.sessions;
       } catch (err) {
-        console.error('获取会话列表失败:', err)
+        console.error('获取会话列表失败:', err);
+        return [];
       }
     },
     formatSessionName(session) {
@@ -119,12 +138,12 @@ export default {
     },
     async switchSession(session_id) {
       if (this.chatRequest.session_id === session_id) {
-        this.showSessionList = false
-        return
+        this.showSessionList = false;
+        return;
       }
-      this.chatRequest.session_id = session_id
-      this.showSessionList = false
-      await this.loadHistory()
+      this.chatRequest.session_id = session_id;
+      this.showSessionList = false;
+      await this.loadHistory();
     },
     async loadHistory() {
       if (!this.chatRequest.session_id) return
@@ -147,6 +166,10 @@ export default {
     async sendMessage() {
       if (!this.chatRequest.message.trim()) return
       this.isSending = true
+
+      const userMessage = this.chatRequest.message; // 保存副本
+      this.messages.push({ role: 'user', text: userMessage })
+
       try {
         const res = await fetch('http://127.0.0.1:8000/chat', {
           method: 'POST',
@@ -154,14 +177,16 @@ export default {
           body: JSON.stringify(this.chatRequest)
         })
         const data = await res.json()
+
         this.chatRequest.session_id = data.session_id
 
-        this.messages.push({ role: 'user', text: this.chatRequest.message })
-        if (data.reply) {
-          const toolResult = data.reply.tool_result;
-          if (toolResult && toolResult.type === 'ui_command') {
-            this.handleToolResult(toolResult);
-          }
+        if (data.reply?.content || data.reply?.message) {
+          const assistantText = data.reply.content || data.reply.message;
+          this.messages.push({ role: 'assistant', text: assistantText });
+        }
+        const toolResult = data.reply?.tool_result;
+        if (toolResult?.type === 'ui_command') {
+          this.handleToolResult(toolResult);
         }
         this.scrollToBottom()
         this.loadHistory()
@@ -179,17 +204,13 @@ export default {
       if (toolResult.params) {
         commandParams = toolResult.params;
       }
-      console.log('commandName', commandName, 'commandParams', commandParams);
-
       if (typeof commandFn === 'function') {
         if (commandName === 'exportJsonFile') {
           commandFn(this.reportList, `reports_${Date.now()}.json`);
           return
         }
         if (commandName === 'createNewReport') {
-          console.log('commandFn:', commandFn.toString());
           let newReport = commandFn(commandParams, this.reportList.length);
-          console.log('newReport:', newReport);
           await this.createReport(newReport)
         }
       } else {
@@ -217,7 +238,7 @@ export default {
     },
     handleSend() {
       if (this.isSending) {
-        // 可实现中止功能
+        // todo 中止功能
         return
       }
       if (!this.chatRequest.message.trim()) return
@@ -227,15 +248,26 @@ export default {
       try {
         const res = await fetch('http://127.0.0.1:8000/conversation/new_session', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ user_id: this.chatRequest.user_id })  // 注意是放到 body 中
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: this.chatRequest.user_id })
         });
-
         const data = await res.json();
         console.log('新会话创建成功', data);
-        this.fetchSessions()
+        
+        // 假设后端返回了新会话的 session_id，通常是 data.session_id
+        const newSessionId = data.session_id;
+        
+        // 先刷新会话列表
+        await this.fetchSessions();
+
+        // 手动切换到新建的会话
+        if (newSessionId) {
+          this.chatRequest.session_id = newSessionId;
+          await this.loadHistory();
+        } else if (this.sessions.length > 0) {
+          this.chatRequest.session_id = this.sessions[0];
+          await this.loadHistory();
+        }
       } catch (err) {
         console.error('新建会话出错', err);
       }
@@ -246,7 +278,7 @@ export default {
         await fetch(`http://127.0.0.1:8000/conversation/session?user_id=${this.chatRequest.user_id}&session_id=${sessionId}`, {
           method: 'DELETE'
         });
-        this.fetchSessions()
+        await this.fetchSessions()
       } catch (err) {
         console.error('删除会话异常:', err);
       }
