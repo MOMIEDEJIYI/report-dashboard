@@ -19,7 +19,7 @@
         </div>
       </div>
       <div class="ai-assistant" @click="handleAIClick" title="点击打开 AI 助手">
-        AI助手
+        小助手
       </div>
     </div>
     <div class="import-export">
@@ -46,6 +46,7 @@
 <script>
 import { ReportTypeDefaults } from '@/config/reportTypes.js'
 import { mapState } from 'vuex'
+import exportJsonFile from '@/utils/export.js'
 import ConfirmDialog from '@/components/base/ConfirmDialog.vue'
 
 export default {
@@ -80,14 +81,7 @@ export default {
       this.$emit('create-report', report) // 通知父组件创建报表
     },
     exportJson() {
-      const dataStr = JSON.stringify(this.reportList, null, 2)
-      const blob = new Blob([dataStr], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `reports_${Date.now()}.json`
-      a.click()
-      URL.revokeObjectURL(url)
+      exportJsonFile(this.reportList, `reports_${Date.now()}.json`)
     },
     triggerFileInput() {
       this.$refs.fileInput.click()
