@@ -77,8 +77,6 @@ export default {
   },
   computed: {
     ...mapState(['reportList']),
-    ...mapActions(['createReport']),
-    ...mapMutations(['setSelectedReportId']),
     visibleMessages() {
       return this.messages.filter(msg => msg.role !== 'system')
     }
@@ -91,6 +89,8 @@ export default {
     document.removeEventListener('click', this.onClickOutside);
   },
   methods: {
+    ...mapActions(['createReport']),
+    ...mapMutations(['setSelectedReportId']),
     toggleSessionList() {
       if (this.sessions.length == 0) {
         return
@@ -189,7 +189,6 @@ export default {
         if (commandName === 'createNewReport') {
           console.log('commandFn:', commandFn.toString());
           let newReport = commandFn(commandParams, this.reportList.length);
-          newReport = utils.clonePlainObject(newReport);
           console.log('newReport:', newReport);
           await this.createReport(newReport)
         }

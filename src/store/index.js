@@ -1,6 +1,5 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import cloneDeep from 'lodash/cloneDeep'
 
 Vue.use(Vuex)
 
@@ -12,9 +11,8 @@ export default new Vuex.Store({
 
   mutations: {
     addReport(state, report) {
-      const clonedReport = cloneDeep(report);
       const newReport = {
-        ...clonedReport,
+        ...report,
         x: report.x || report.xGrid || (state.reportList.length * 4) % 12,
         y: report.y || report.yGrid || Math.floor(state.reportList.length / 3) * 8,
         w: report.w || report.wGrid || 4,
