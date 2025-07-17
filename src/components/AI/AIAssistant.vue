@@ -50,7 +50,7 @@
 </template>
 
 <script>
-import { mapState } from 'vuex'
+import { mapState, mapActions, mapMutations } from 'vuex'
 import utils from '@/utils';
 
 export default {
@@ -77,6 +77,8 @@ export default {
   },
   computed: {
     ...mapState(['reportList']),
+    ...mapActions(['createReport']),
+    ...mapMutations(['setSelectedReportId']),
     visibleMessages() {
       return this.messages.filter(msg => msg.role !== 'system')
     }
@@ -170,12 +172,27 @@ export default {
         this.isSending = false
       }
     },
-    handleToolResult(toolResult) {
+    async handleToolResult(toolResult) {
       const commandName = toolResult.command;
       const commandFn = utils[commandName];
+      let commandParams = {};
+      if (toolResult.params) {
+        commandParams = toolResult.params;
+      }
+      console.log('commandName', commandName, 'commandParams', commandParams);
 
       if (typeof commandFn === 'function') {
-        commandFn(this.reportList, `reports_${Date.now()}.json`);
+        if (commandName === 'exportJsonFile') {
+          commandFn(this.reportList, `reports_${Date.now()}.json`);
+          return
+        }
+        if (commandName === 'createNewReport') {
+          console.log('commandFn:', commandFn.toString());
+          let newReport = commandFn(commandParams, this.reportList.length);
+          newReport = utils.clonePlainObject(newReport);
+          console.log('newReport:', newReport);
+          await this.createReport(newReport)
+        }
       } else {
         console.warn(`未找到命令函数：${commandName}`);
       }
