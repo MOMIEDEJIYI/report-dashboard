@@ -1,4 +1,5 @@
 # report-dashboard
 报表demo
 
-运行：npm run serve
+先 npm i
+再运行：npm run serve
