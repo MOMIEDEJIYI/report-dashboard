@@ -119,5 +119,24 @@ export const ReportTypeDefaults = {
       total: 38200,
       growth: 8.3
     }
+  },
+  table: {
+    name: '原始表格',
+    group: '数据表格',
+    componentName: 'TableRenderer',
+    configComponentName: 'TableRendererConfig',
+    config: {
+      title: '原始数据明细'
+    },
+    fields: ['名称', '数量', '金额'],
+    data: {
+      source: [
+        ['名称', '数量', '金额'],
+        ['商品A', 10, 120],
+        ['商品B', 5, 60],
+        ['商品C', 8, 80],
+        ['商品D', 12, 150]
+      ]
+    }
   }
 }
