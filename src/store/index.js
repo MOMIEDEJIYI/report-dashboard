@@ -72,11 +72,8 @@ export default new Vuex.Store({
     updateLayout({ commit }, layouts) {
       commit('updateReportLayout', layouts)
     },
-    updateReport(state, updatedReport) {
-      const index = state.reportList.findIndex(r => r.id === updatedReport.id)
-      if (index !== -1) {
-        Vue.set(state.reportList, index, { ...updatedReport })
-      }
+    updateReport({ commit }, report) {
+      commit('updateReport', report)
     },
     createReport({ commit }, report) {
       console.log('report:', report);

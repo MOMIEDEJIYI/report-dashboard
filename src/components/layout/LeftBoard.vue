@@ -214,12 +214,23 @@ export default {
 }
 
 .chart-content {
-  flex: 1;
-  padding: 10px;
-  padding-right: 20px;
-  padding-bottom: 20px;
-  min-height: calc(var(--grid-row-height) * var(--min-rows) - 20px);
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: auto;
+  height: 100%;
+  padding: 10px 20px 20px 10px;
   box-sizing: border-box;
+  overflow-y: auto; /* 允许垂直滚动 */
+  -webkit-overflow-scrolling: touch; /* iOS 上的平滑滚动 */
+
+  /* 隐藏滚动条 */
+  /* 对于 Chrome, Safari, Edge */
+  &::-webkit-scrollbar {
+    display: none; /* 隐藏滚动条 */
+  }
+
+  /* 对于 Firefox */
+  scrollbar-width: none; /* 隐藏滚动条 */
 }
 
 .empty-state {

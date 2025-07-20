@@ -128,7 +128,11 @@ export const ReportTypeDefaults = {
     config: {
       title: '原始数据明细'
     },
-    fields: ['名称', '数量', '金额'],
+    fields: [
+      { key: 'name', label: '名称' },
+      { key: 'amount', label: '数量' },
+      { key: 'price', label: '金额' }
+    ],
     data: {
       source: [
         ['名称', '数量', '金额'],
@@ -140,3 +144,30 @@ export const ReportTypeDefaults = {
     }
   }
 }
+
+/**
+ * 报表对象示例结构：
+ * {
+ *   id: string,
+ *   type: string,
+ *   componentName: string,
+ *   name: string,
+ *   config: object,
+ *   data: {
+ *     source: Array<Array<any>>
+ *   },
+ *   dataSource: {
+ *     type: string,
+ *     fields: Array<any>, || ['category', 'value'],
+ *     url: string
+ *   },
+ *   x: number,
+ *   y: number,
+ *   w: number,
+ *   h: number,
+ *   xGrid: number,
+ *   yGrid: number,
+ *   wGrid: number,
+ *   hGrid: number
+ * }
+ */
